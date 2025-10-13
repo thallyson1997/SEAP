@@ -1,0 +1,182 @@
+/* lote.css: estilos exclusivos para lote1.html */
+
+.lote-header {
+    text-align: center;
+    margin-top: 30px;
+    margin-bottom: 18px;
+}
+
+.lote-header h1 {
+    margin-bottom: 10px;
+}
+
+.lote-header p {
+    color: #555;
+    font-size: 1.1rem;
+    margin-top: 0;
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    margin: 30px 0 25px 0;
+}
+.actions button {
+    background: linear-gradient(90deg, #007bff 60%, #0056b3 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 28px;
+    font-size: 1.08rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    outline: none;
+}
+.actions button:hover {
+    background: linear-gradient(90deg, #0056b3 60%, #007bff 100%);
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+}
+
+.voltar {
+    color: #fff;
+    background: linear-gradient(90deg, #6c757d 60%, #495057 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 30px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    display: inline-block;
+    margin-top: 20px;
+}
+.voltar:hover {
+    background: linear-gradient(90deg, #495057 60%, #6c757d 100%);
+    text-decoration: underline;
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+}
+.voltar.fixo {
+    position: fixed;
+    left: 30px;
+    bottom: 30px;
+    margin: 0;
+    z-index: 1100;
+}
+
+.dados-container {
+    display: flex;
+    flex-direction: row;
+    gap: 32px;
+    justify-content: flex-start;
+    align-items: flex-start;
+    min-height: 350px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.dado {
+    flex: 1 1 0;
+    max-width: 48%;
+    min-width: 260px;
+    margin-left: 0;
+    margin-right: 0;
+    box-sizing: border-box;
+}
+
+.tabela-renderizada {
+    margin: 18px 0 10px 0;
+    width: 50%;
+    min-width: 220px;
+    max-width: 100%;
+    float: left;
+    text-align: left;
+}
+.tabela-renderizada table.tabela-extraida {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    font-size: 1rem;
+    margin: 0 auto;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.tabela-renderizada th, .tabela-renderizada td {
+    border: 1px solid #e0e0e0;
+    padding: 8px 10px;
+    text-align: center;
+}
+.tabela-renderizada th {
+    background: #007bff;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+.tabela-renderizada tr:nth-child(even) td {
+    background: #f6f8fa;
+}
+.tabela-renderizada tr:hover td {
+    background: #e3f0ff;
+}
+
+/* Popup - começa invisível */
+.popup {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup.ativo {
+    display: flex !important;
+}
+
+/* Conteúdo do popup */
+.popup-content {
+    background: #fff;
+    padding: 25px 20px;
+    border-radius: 10px;
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    animation: popupFadeIn 0.3s ease;
+}
+
+/* Botões do popup */
+.popup-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.popup-buttons button {
+    background-color: #007bff;
+    border: none;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.popup-buttons button:hover {
+    background-color: #0056b3;
+}
+
+@keyframes popupFadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}

@@ -1,0 +1,4 @@
+# Ignora todos os arquivos da pasta dados
+/dados/*
+# Mas permite manter a pasta dados no repositório
+dados/.gitkeep

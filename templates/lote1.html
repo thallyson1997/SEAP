@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lote 1 - Empresa Alpha</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/lote.css') }}">
+</head>
+<body>
+
+    <div class="lote-header">
+        <h1>Lote 1 - Empresa Alpha</h1>
+        <p>Contrato nº 2025/001 | Portaria 1234/2025</p>
+    </div>
+
+
+    <div class="actions">
+        <button id="btnAdd" type="button">Adicionar/Editar Dados</button>
+        <button id="btnDelete" type="button">Excluir Dados</button>
+    </div>
+
+
+    <!-- Popup Adicionar/Editar -->
+    <div id="popup" class="popup">
+        <form method="POST" class="popup-content">
+            <input type="hidden" name="acao" value="adicionar_editar">
+            <h2>Adicionar/Editar Dados</h2>
+            {% if erro %}
+                <div class="erro-popup" style="color: #b30000; background: #ffeaea; padding: 8px 10px; border-radius: 6px; margin-bottom: 10px; text-align: center;">{{ erro }}</div>
+            {% endif %}
+            <label for="presidio">Selecione o Presídio:</label>
+            <select name="presidio" id="presidio" required>
+                <option value="">Selecione...</option>
+                <option value="Presídio Central">Presídio Central</option>
+                <option value="Penitenciária Alfa">Penitenciária Alfa</option>
+                <option value="Colônia Beta">Colônia Beta</option>
+            </select>
+
+
+
+            <label for="texto">Observação (opcional):</label>
+            <textarea name="texto" id="texto"></textarea>
+
+            <label for="tabela">Tabela (obrigatória):</label>
+            <textarea name="tabela" id="tabela" placeholder="Cole aqui a tabela extraída do PDF..." required></textarea>
+
+            <div class="popup-buttons">
+                <button type="submit">Salvar</button>
+                <button type="button" id="btnClose">Cancelar</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Popup Excluir -->
+    <div id="popupDelete" class="popup">
+        <form method="POST" class="popup-content">
+            <input type="hidden" name="acao" value="excluir">
+            <h2>Excluir Dados</h2>
+            <label for="presidio_excluir">Selecione o Presídio:</label>
+            <select name="presidio_excluir" id="presidio_excluir" required>
+                <option value="">Selecione...</option>
+                <option value="Presídio Central">Presídio Central</option>
+                <option value="Penitenciária Alfa">Penitenciária Alfa</option>
+                <option value="Colônia Beta">Colônia Beta</option>
+            </select>
+            <div class="popup-buttons">
+                <button type="submit" style="background:#b30000;">Excluir</button>
+                <button type="button" id="btnCloseDelete">Cancelar</button>
+            </div>
+        </form>
+    </div>
+
+    <h3>Dados adicionados:</h3>
+    <div class="dados-container">
+        {% if dados %}
+            {% for item in dados %}
+                <div class="dado">
+                    <strong>{{ item.presidio }}</strong><br>
+                    {% if item.tabela_html %}
+                        <div class="tabela-renderizada">{{ item.tabela_html|safe }}</div>
+                    {% endif %}
+                    {% if item.texto %}
+                        <div class="observacao">{{ item.texto }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Nenhum dado adicionado ainda.</p>
+        {% endif %}
+    </div>
+
+    <a href="/" class="voltar fixo">&larr; Voltar</a>
+    <script id="dados-json" type="application/json">{{ dados|tojson|safe }}</script>
+    <script>
+        // Adicionar/Editar Dados
+        const popup = document.getElementById('popup');
+        document.getElementById('btnAdd').onclick = () => {
+            document.getElementById('presidio').value = '';
+            document.getElementById('texto').value = '';
+            popup.classList.add('ativo');
+        };
+        document.getElementById('btnClose').onclick = () => popup.classList.remove('ativo');
+        popup.addEventListener('click', function(e) {
+            if (e.target === popup) popup.classList.remove('ativo');
+        });
+
+        // Preencher texto ao selecionar presídio para editar
+        const dadosEdit = JSON.parse(document.getElementById('dados-json').textContent);
+        document.getElementById('presidio').onchange = function() {
+            const pres = this.value;
+            const item = dadosEdit.find(d => d.presidio === pres);
+            document.getElementById('texto').value = item ? item.texto : '';
+        };
+
+        // Excluir Dados
+        const popupDelete = document.getElementById('popupDelete');
+        document.getElementById('btnDelete').onclick = () => {
+            document.getElementById('presidio_excluir').value = '';
+            popupDelete.classList.add('ativo');
+        };
+        document.getElementById('btnCloseDelete').onclick = () => popupDelete.classList.remove('ativo');
+        popupDelete.addEventListener('click', function(e) {
+            if (e.target === popupDelete) popupDelete.classList.remove('ativo');
+        });
+    </script>
+</body>
+</html>

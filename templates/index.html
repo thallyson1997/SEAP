@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Lotes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+<body>
+
+    <h1 class="titulo-centralizado">Selecione um Lote</h1>
+
+    <div class="grid-container">
+        {% for i in range(1, 10) %}
+        <a href="{{ url_for('lote1') if i == 1 else '#' }}" class="card">
+            <img src="{{ url_for('static', filename='img/placeholder.jpg') }}" alt="Imagem do lote">
+            <h2>Lote {{ i }}</h2>
+            <p>(Empresa {{ i }})</p>
+        </a>
+        {% endfor %}
+    </div>
+</body>
+</html>
