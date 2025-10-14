@@ -8,6 +8,22 @@
 </head>
 <body>
 
+    <!-- Filtro de mês e ano no canto superior direito -->
+    <form id="filtro-form" method="get" style="position: fixed; top: 16px; right: 18px; z-index: 2100; background: #f5f5f5; border-radius: 8px; padding: 4px 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; gap: 8px; align-items: center; font-size: 1.05rem;">
+        <label for="mes" style="margin:0;">Mês:</label>
+        <select name="mes" id="mes">
+            {% set meses_nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] %}
+            {% for m in meses %}
+                <option value="{{ m }}" {% if m == mes %}selected{% endif %}>{{ meses_nomes[m-1] }}</option>
+            {% endfor %}
+        </select>
+        <label for="ano" style="margin:0;">Ano:</label>
+        <select name="ano" id="ano">
+            <option value="2025" selected>2025</option>
+        </select>
+        <button type="submit" style="padding:2px 10px; font-size:0.98rem;">Filtrar</button>
+    </form>
+
     <div class="lote-header">
         <h1>Lote 1 - Empresa Alpha</h1>
         <p>Contrato nº 2025/001 | Portaria 1234/2025</p>
@@ -24,6 +40,8 @@
     <div id="popup" class="popup">
         <form method="POST" class="popup-content">
             <input type="hidden" name="acao" value="adicionar_editar">
+            <input type="hidden" name="mes" id="mes_hidden" value="{{ mes }}">
+            <input type="hidden" name="ano" id="ano_hidden" value="{{ ano }}">
             <h2>Adicionar/Editar Dados</h2>
             {% if erro %}
                 <div class="erro-popup" style="color: #b30000; background: #ffeaea; padding: 8px 10px; border-radius: 6px; margin-bottom: 10px; text-align: center;">{{ erro }}</div>
@@ -72,26 +90,122 @@
 
     <h3>Dados adicionados:</h3>
     <div class="dados-container">
-        {% if dados %}
-            {% for item in dados %}
-                <div class="dado">
-                    <strong>{{ item.presidio }}</strong><br>
-                    {% if item.tabela_html %}
-                        <div class="tabela-renderizada">{{ item.tabela_html|safe }}</div>
-                    {% endif %}
-                    {% if item.texto %}
-                        <div class="observacao">{{ item.texto }}</div>
-                    {% endif %}
+        {% if tabela_unica_html %}
+            <div class="filtros-popup-bar">
+                <button id="abrir-filtros" type="button">Filtrar Dados &#x25BC;</button>
+                <span id="resumo-filtros" style="margin-left:12px;color:#007bff;font-weight:500;"></span>
+            </div>
+            <div id="popup-filtros" class="popup-filtros">
+                <div class="popup-filtros-content">
+                    <h3>Filtrar Dados</h3>
+                    <div class="filtros-grupo">
+                        <label>Presídio:</label>
+                        <div id="filtros-presidio-opcoes" class="filtros-opcoes"></div>
+                    </div>
+                    <div class="filtros-grupo">
+                        <label>Data:</label>
+                        <div id="filtros-data-opcoes" class="filtros-opcoes"></div>
+                    </div>
+                    <div class="popup-filtros-botoes">
+                        <button id="limpar-filtros" type="button">Limpar</button>
+                        <button id="aplicar-filtros" type="button">Filtrar</button>
+                    </div>
                 </div>
-            {% endfor %}
-        {% else %}
+            </div>
+            <div class="tabela-renderizada" style="width:100%;max-width:none;">
+                {{ tabela_unica_html|safe }}
+            </div>
+        {% elif not dados %}
             <p>Nenhum dado adicionado ainda.</p>
         {% endif %}
     </div>
 
-    <a href="/" class="voltar fixo">&larr; Voltar</a>
+    <a href="/?mes={{ mes }}&ano={{ ano }}" class="voltar voltar-topo">&larr; Voltar</a>
     <script id="dados-json" type="application/json">{{ dados|tojson|safe }}</script>
     <script>
+
+        // Filtro popup interativo multiplo
+        function criarFiltroPopup() {
+            const tabela = document.querySelector('.tabela-renderizada table');
+            if (!tabela) return;
+            const linhas = Array.from(tabela.querySelectorAll('tbody tr'));
+            const colPresidio = Array.from(tabela.querySelectorAll('thead th')).findIndex(th => th.textContent.trim() === 'Presídio');
+            const colData = Array.from(tabela.querySelectorAll('thead th')).findIndex(th => th.textContent.trim() === 'Data');
+            const presidios = [...new Set(linhas.map(tr => tr.children[colPresidio]?.textContent.trim()))].filter(Boolean);
+            const datas = [...new Set(linhas.map(tr => tr.children[colData]?.textContent.trim()))].filter(Boolean);
+
+            // Elementos do popup
+            const btnAbrir = document.getElementById('abrir-filtros');
+            const popup = document.getElementById('popup-filtros');
+            const opcoesPresidio = document.getElementById('filtros-presidio-opcoes');
+            const opcoesData = document.getElementById('filtros-data-opcoes');
+            const btnLimpar = document.getElementById('limpar-filtros');
+            const btnFiltrar = document.getElementById('aplicar-filtros');
+            const resumoFiltros = document.getElementById('resumo-filtros');
+
+            // Preencher opções
+            function criarCheckboxes(lista, container, grupo) {
+                container.innerHTML = '';
+                lista.forEach(valor => {
+                    const id = `chk-${grupo}-${valor.replace(/\W/g,'_')}`;
+                    const label = document.createElement('label');
+                    label.className = 'chk-label';
+                    const chk = document.createElement('input');
+                    chk.type = 'checkbox';
+                    chk.value = valor;
+                    chk.id = id;
+                    label.appendChild(chk);
+                    label.appendChild(document.createTextNode(' ' + valor));
+                    container.appendChild(label);
+                });
+            }
+            criarCheckboxes(presidios, opcoesPresidio, 'presidio');
+            criarCheckboxes(datas, opcoesData, 'data');
+
+            // Estado dos filtros
+            let selecionadosPresidio = [];
+            let selecionadosData = [];
+
+            // Abrir/fechar popup
+            btnAbrir.onclick = () => {
+                popup.style.display = 'flex';
+                // Marcar checkboxes conforme seleção atual
+                opcoesPresidio.querySelectorAll('input[type=checkbox]').forEach(chk => {
+                    chk.checked = selecionadosPresidio.includes(chk.value);
+                });
+                opcoesData.querySelectorAll('input[type=checkbox]').forEach(chk => {
+                    chk.checked = selecionadosData.includes(chk.value);
+                });
+            };
+            popup.onclick = e => { if (e.target === popup) popup.style.display = 'none'; };
+
+            // Limpar filtros
+            btnLimpar.onclick = () => {
+                opcoesPresidio.querySelectorAll('input[type=checkbox]').forEach(chk => chk.checked = false);
+                opcoesData.querySelectorAll('input[type=checkbox]').forEach(chk => chk.checked = false);
+            };
+
+            // Aplicar filtros
+            btnFiltrar.onclick = () => {
+                selecionadosPresidio = Array.from(opcoesPresidio.querySelectorAll('input[type=checkbox]:checked')).map(chk => chk.value);
+                selecionadosData = Array.from(opcoesData.querySelectorAll('input[type=checkbox]:checked')).map(chk => chk.value);
+                linhas.forEach(tr => {
+                    const pres = tr.children[colPresidio]?.textContent.trim();
+                    const data = tr.children[colData]?.textContent.trim();
+                    const matchPres = selecionadosPresidio.length === 0 || selecionadosPresidio.includes(pres);
+                    const matchData = selecionadosData.length === 0 || selecionadosData.includes(data);
+                    tr.style.display = (matchPres && matchData) ? '' : 'none';
+                });
+                // Resumo
+                let resumo = [];
+                if (selecionadosPresidio.length) resumo.push('Presídio: ' + selecionadosPresidio.join(', '));
+                if (selecionadosData.length) resumo.push('Data: ' + selecionadosData.join(', '));
+                resumoFiltros.textContent = resumo.length ? resumo.join(' | ') : '';
+                popup.style.display = 'none';
+            };
+        }
+        document.addEventListener('DOMContentLoaded', criarFiltroPopup);
+
         // Adicionar/Editar Dados
         const popup = document.getElementById('popup');
         document.getElementById('btnAdd').onclick = () => {
@@ -102,6 +216,16 @@
         document.getElementById('btnClose').onclick = () => popup.classList.remove('ativo');
         popup.addEventListener('click', function(e) {
             if (e.target === popup) popup.classList.remove('ativo');
+        });
+
+        // Atualiza os campos ocultos de mês/ano do formulário de adicionar/editar sempre que o filtro for alterado
+        document.getElementById('mes_hidden').value = document.getElementById('mes').value;
+        document.getElementById('ano_hidden').value = document.getElementById('ano').value;
+        document.getElementById('mes').addEventListener('change', function() {
+            document.getElementById('mes_hidden').value = this.value;
+        });
+        document.getElementById('ano').addEventListener('change', function() {
+            document.getElementById('ano_hidden').value = this.value;
         });
 
         // Preencher texto ao selecionar presídio para editar
