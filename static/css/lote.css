@@ -1,3 +1,94 @@
+/* ===== Célula anotada (amarela permanente) ===== */
+.celula-anotada {
+    background: #fff7b2 !important; /* amarelo suave */
+    color: #333 !important;
+    font-weight: bold;
+}
+/* ===== Destaque para colunas x SIISP ===== */
+.tabela-renderizada td.xsiisp-verde {
+    background: #d4ffb2 !important; /* verde lima */
+    color: #1a4d00 !important;
+    font-weight: bold;
+}
+.tabela-renderizada td.xsiisp-azul {
+    background: #b2e0ff !important; /* azul claro */
+    color: #003366 !important;
+    font-weight: bold;
+}
+.tabela-renderizada td.xsiisp-vermelho {
+    background: #ffd6d6 !important; /* vermelho cédula */
+    color: #b30000 !important;
+    font-weight: bold;
+}
+/* ===== Resumo Somas (mini-resumo) ===== */
+.resumo-somas-tabela {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 24px auto;
+    padding: 24px 0 18px 0;
+    background: linear-gradient(90deg, #f5faff 60%, #e3f0ff 100%);
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0,123,255,0.10);
+    max-width: 900px;
+    min-width: 340px;
+}
+.mini-resumo {
+    margin: 0 auto;
+    font-size: 1.18em;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(0,123,255,0.08);
+    overflow: hidden;
+    min-width: 600px;
+    max-width: 860px;
+}
+.mini-resumo th, .mini-resumo td {
+    padding: 14px 18px;
+    text-align: center;
+    font-size: 1.08em;
+}
+.mini-resumo th {
+    background: #007bff;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.13em;
+    border: none;
+}
+.mini-resumo tr:nth-child(even) td {
+    background: #f6f8fa;
+}
+.mini-resumo tr td[colspan="8"] {
+    font-size: 1.18em;
+    letter-spacing: 0.5px;
+    padding: 18px 0 12px 0;
+}
+.mini-resumo tr:last-child td {
+    background: #007bff;
+    color: #fff;
+    font-size: 1.18em;
+    font-weight: 700;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+}
+.mini-resumo tr td[colspan="2"] {
+    font-size: 1.09em;
+    font-weight: 600;
+}
+.mini-resumo tr td[style*="color:#b85c00"] {
+    background: #fffbe6 !important;
+}
+.mini-resumo tr td[style*="color:#007bff"] {
+    background: #e3f0ff !important;
+}
+.mini-resumo tr td[style*="color:#008000"] {
+    background: #e6fff0 !important;
+}
+.mini-resumo tr td {
+    border: none;
+}
 /* Top bar para alinhar botão voltar à esquerda e filtro à direita */
 .top-bar-seap {
     display: flex;
@@ -265,15 +356,10 @@
 }
 
 .dados-container {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    justify-content: flex-start;
-    align-items: stretch;
+    display: block;
     min-height: 350px;
     width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
+    margin: 0;
 }
 .dado {
     flex: 1 1 0;
@@ -284,16 +370,16 @@
     box-sizing: border-box;
 }
 
+
 .tabela-renderizada {
     margin: 0 0 10px 0;
     width: 100%;
-    min-width: 220px;
-    max-width: 100%;
-    float: none;
     text-align: left;
+    box-sizing: border-box;
 }
 .tabela-renderizada table.tabela-extraida {
-    width: 100%;
+    width: max-content;
+    min-width: 900px;
     border-collapse: collapse;
     background: #fff;
     font-size: 1rem;
@@ -301,17 +387,24 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.07);
     border-radius: 8px;
     overflow: hidden;
+    table-layout: fixed;
 }
 .tabela-renderizada th, .tabela-renderizada td {
     border: 1px solid #e0e0e0;
-    padding: 8px 10px;
+    padding: 2px 3px;
     text-align: center;
+    min-width: 55px;
+    max-width: 90px;
+    word-break: break-word;
+    white-space: pre-line;
+    font-size: 1rem;
 }
 .tabela-renderizada th {
     background: #007bff;
     color: #fff;
     font-weight: 600;
     letter-spacing: 0.5px;
+    font-size: 1rem;
 }
 .tabela-renderizada tr:nth-child(even) td {
     background: #f6f8fa;

@@ -1,12 +1,59 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+        <script type="text/javascript">
+            window.mesAtual = {{ mes|tojson|safe }};
+            window.anoAtual = {{ ano|tojson|safe }};
+        </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lote 1 - Empresa Alpha</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/lote.css') }}">
 </head>
 <body>
+    <!-- Popup Adicionar Manualmente -->
+    <div id="popupManualAdd" class="popup">
+    <form class="popup-content" onsubmit="return false;" style="max-width:1100px;min-width:700px;width:90vw;">
+            <h2>Adicionar Manualmente</h2>
+            <label for="presidioManualAdd">Selecione o Presídio:</label>
+            <select name="presidioManualAdd" id="presidioManualAdd" required>
+                <option value="">Selecione...</option>
+                <option value="Presídio Central">Presídio Central</option>
+                <option value="Penitenciária Alfa">Penitenciária Alfa</option>
+                <option value="Colônia Beta">Colônia Beta</option>
+            </select>
+            <div id="conteudoManualAdd" style="margin-top:16px;"></div>
+            {% set colunas = [
+                'Café Interno', 'Café Funcionário',
+                'Almoço Interno', 'Almoço Funcionário',
+                'Lanche Interno', 'Lanche Funcionário',
+                'Jantar Interno', 'Jantar Funcionário'
+            ] %}
+            <table id="tabelaManualInput" style="width:100%;margin:18px 0;border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <th>Dia</th>
+                        {% for col in colunas %}
+                        <th>{{ col }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dia in range(1, dias_no_mes + 1) %}
+                    <tr>
+                        <td>{{ dia }}</td>
+                        {% for col in colunas %}
+                        <td><input type="text" style="width:90%;padding:1px 2px;font-size:0.92em;height:18px;line-height:16px;" /></td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="popup-buttons">
+                <button type="button" id="btnCloseManualAdd">Cancelar</button>
+            </div>
+        </form>
+    </div>
 
     <!-- Topo da página: botão voltar à esquerda e filtro de mês/ano à direita -->
     <div class="top-bar-seap">
@@ -34,24 +81,65 @@
 
     <!-- Botões de ação acima do filtro e tabela -->
     <div class="actions">
-        <button id="btnAdd" type="button">Adicionar/Editar Dados</button>
-        <button id="btnDelete" type="button">Excluir Dados</button>
+        <button id="btnAdd" type="button">Adicionar Mapas</button>
+        <button id="btnAddManual" type="button">Adicionar Manualmente</button>
+        <button id="btnDelete" type="button">Excluir Mapas</button>
+        <button id="btnAddSiisp" type="button">Adicionar n° SIISP</button>
     </div>
+
+    <!-- Popup Adicionar SIISP -->
+    <div id="popupSiisp" class="popup">
+        <form method="POST" class="popup-content">
+            <h2>Adicionar n° SIISP</h2>
+            <label for="siisp_presidio">Presídio:</label>
+            <select id="siisp_presidio" name="siisp_presidio">
+                <option value="">Selecione...</option>
+                <option value="Presídio Central">Presídio Central</option>
+                <option value="Penitenciária Alfa">Penitenciária Alfa</option>
+                <option value="Colônia Beta">Colônia Beta</option>
+            </select>
+            <label for="siisp_texto">Números SIISP:</label>
+            <textarea id="siisp_texto" name="siisp_texto" placeholder="Digite os números SIISP..."></textarea>
+            <div class="popup-buttons">
+                <button type="submit">Salvar</button>
+                <button type="button" id="btnCloseSiisp">Cancelar</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        // Popup Adicionar SIISP
+        const btnAddSiisp = document.getElementById('btnAddSiisp');
+        const popupSiisp = document.getElementById('popupSiisp');
+        const btnCloseSiisp = document.getElementById('btnCloseSiisp');
+        btnAddSiisp.onclick = () => {
+            document.getElementById('siisp_presidio').value = '';
+            document.getElementById('siisp_texto').value = '';
+            popupSiisp.classList.add('ativo');
+        };
+        btnCloseSiisp.onclick = () => popupSiisp.classList.remove('ativo');
+        popupSiisp.addEventListener('click', function(e) {
+            if (e.target === popupSiisp) popupSiisp.classList.remove('ativo');
+        });
+    </script>
     <!-- Filtro de tabela e tabela renderizada -->
     <div class="dados-container">
         {% if tabela_unica_html %}
             <div class="filtros-popup-bar" style="gap: 10px;">
                 <button id="abrir-filtro-presidio" type="button">Filtrar Presídio</button>
                 <button id="abrir-filtro-data" type="button">Filtrar Data</button>
-                <button id="aplicar-filtros" type="button" style="background:#007bff;color:#fff;">Filtrar</button>
                 <button id="limpar-filtros" type="button" style="background:#e0e0e0;color:#333;">Limpar seleção</button>
             </div>
+            <script id="precos-json" type="application/json">{{ precos_lote1|tojson|safe }}</script>
+            <div id="resumo-somas" class="resumo-somas-tabela" style="margin-bottom: 12px;"></div>
             <!-- Popup filtro presídio -->
             <div id="popup-filtro-presidio" class="popup-filtros">
                 <div class="popup-filtros-content">
                     <button type="button" class="popup-close" id="close-popup-presidio">×</button>
                     <h3>Selecione o(s) Presídio(s)</h3>
                     <div class="filtros-opcoes" id="filtros-presidio-opcoes"></div>
+                    <div class="popup-filtros-botoes">
+                        <button id="aplicar-filtro-presidio" type="button">Filtrar</button>
+                    </div>
                 </div>
             </div>
             <!-- Popup filtro data -->
@@ -60,6 +148,9 @@
                     <button type="button" class="popup-close" id="close-popup-data">×</button>
                     <h3>Selecione a(s) Data(s)</h3>
                     <div class="filtros-opcoes" id="filtros-data-opcoes"></div>
+                    <div class="popup-filtros-botoes">
+                        <button id="aplicar-filtro-data" type="button">Filtrar</button>
+                    </div>
                 </div>
             </div>
             <div class="tabela-renderizada" style="width:100%;max-width:none;">
@@ -80,6 +171,7 @@
             {% if erro %}
                 <div class="erro-popup" style="color: #b30000; background: #ffeaea; padding: 8px 10px; border-radius: 6px; margin-bottom: 10px; text-align: center;">{{ erro }}</div>
             {% endif %}
+
             <label for="presidio">Selecione o Presídio:</label>
             <select name="presidio" id="presidio" required>
                 <option value="">Selecione...</option>
@@ -90,8 +182,6 @@
 
 
 
-            <label for="texto">Observação (opcional):</label>
-            <textarea name="texto" id="texto"></textarea>
             <textarea name="tabela" id="tabela" placeholder="Cole aqui a tabela extraída do PDF..." required></textarea>
 
             <div class="popup-buttons">
@@ -125,7 +215,7 @@
     <script id="dados-json" type="application/json">{{ dados|tojson|safe }}</script>
     <script>
 
-        // Filtro popup separado para presídio e data
+        // Filtro popup separado para presídio e data, com botão Filtrar dentro de cada popup
         function criarFiltroPopupSeparado() {
             const tabela = document.querySelector('.tabela-renderizada table');
             if (!tabela) return;
@@ -143,8 +233,9 @@
             const opcoesPresidio = document.getElementById('filtros-presidio-opcoes');
             const opcoesData = document.getElementById('filtros-data-opcoes');
             const btnLimpar = document.getElementById('limpar-filtros');
-            const btnFiltrar = document.getElementById('aplicar-filtros');
-            // const resumoFiltros = document.getElementById('resumo-filtros');
+            const btnFiltrarPresidio = document.getElementById('aplicar-filtro-presidio');
+            const btnFiltrarData = document.getElementById('aplicar-filtro-data');
+            const resumoSomas = document.getElementById('resumo-somas');
 
             // Preencher opções
             function criarCheckboxes(lista, container, grupo) {
@@ -168,6 +259,96 @@
             // Estado dos filtros
             let selecionadosPresidio = [];
             let selecionadosData = [];
+
+            // Função para atualizar o resumo de somas em formato de tabela
+            function atualizarResumoSomas() {
+                const precos = JSON.parse(document.getElementById('precos-json').textContent);
+                if (!resumoSomas) return;
+                // Mapeamento dos nomes das colunas para os tipos
+                const tipos = [
+                    {col: 'Café Interno', grupo: 'Café', subtipo: 'Interno'},
+                    {col: 'Café Funcionário', grupo: 'Café', subtipo: 'Funcionário'},
+                    {col: 'Almoço Interno', grupo: 'Almoço', subtipo: 'Interno'},
+                    {col: 'Almoço Funcionário', grupo: 'Almoço', subtipo: 'Funcionário'},
+                    {col: 'Lanche Interno', grupo: 'Lanche', subtipo: 'Interno'},
+                    {col: 'Lanche Funcionário', grupo: 'Lanche', subtipo: 'Funcionário'},
+                    {col: 'Jantar Interno', grupo: 'Jantar', subtipo: 'Interno'},
+                    {col: 'Jantar Funcionário', grupo: 'Jantar', subtipo: 'Funcionário'}
+                ];
+                const ths = Array.from(tabela.querySelectorAll('thead th'));
+                // Descobre o índice de cada coluna relevante
+                const idxs = {};
+                tipos.forEach(t => {
+                    idxs[t.col] = ths.findIndex(th => th.textContent.trim().toLowerCase() === t.col.toLowerCase());
+                });
+                const linhasVisiveis = linhas.filter(tr => tr.style.display !== 'none');
+                // Soma para cada tipo
+                const somas = {};
+                tipos.forEach(t => {
+                    let soma = 0;
+                    const idx = idxs[t.col];
+                    if (idx >= 0) {
+                        linhasVisiveis.forEach(tr => {
+                            const val = tr.children[idx]?.textContent.replace(/\./g,'').replace(',','.').replace(/[^\d.-]/g,'');
+                            const num = parseFloat(val);
+                            if (!isNaN(num)) soma += num;
+                        });
+                    }
+                    somas[t.col] = soma;
+                });
+                // Preços fixos do backend (inseridos no template)
+                // Monta a tabela
+                let html = '<table class="mini-resumo"><thead><tr>';
+                ['Café','Almoço','Lanche','Jantar'].forEach(grupo => {
+                    html += `<th colspan=2>${grupo}</th>`;
+                });
+                html += '</tr><tr>';
+                for (let i=0;i<4;i++) html += '<th>Interno</th><th>Funcionário</th>';
+                html += '</tr></thead><tbody>';
+                // Primeira linha: preços
+                html += '<tr>';
+                let precosLinha = [];
+                ['Café','Almoço','Lanche','Jantar'].forEach(grupo => {
+                    let precoInt = precos[grupo+' Interno'] || 0;
+                    let precoFunc = precos[grupo+' Funcionário'] || 0;
+                    precosLinha.push(precoInt, precoFunc);
+                    html += `<td style='font-size:0.98em;color:#007bff;'>R$ ${precoInt.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>`;
+                    html += `<td style='font-size:0.98em;color:#007bff;'>R$ ${precoFunc.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>`;
+                });
+                html += '</tr>';
+                // Segunda linha: somas
+                html += '<tr>';
+                let somasLinha = [];
+                ['Café','Almoço','Lanche','Jantar'].forEach(grupo => {
+                    let interno = somas[grupo+' Interno'] || 0;
+                    let func = somas[grupo+' Funcionário'] || 0;
+                    somasLinha.push(interno, func);
+                    html += `<td>${interno % 1 === 0 ? interno : interno.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>`;
+                    html += `<td>${func % 1 === 0 ? func : func.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>`;
+                });
+                html += '</tr>';
+                // Terceira linha: total por tipo de refeição (interno + funcionário)
+                let totaisIndividuais = [];
+                for (let i = 0; i < precosLinha.length; i++) {
+                    let total = precosLinha[i] * somasLinha[i];
+                    totaisIndividuais.push(total);
+                }
+                html += '<tr>';
+                let totaisPorTipo = [];
+                for (let i = 0; i < totaisIndividuais.length; i += 2) {
+                    let totalTipo = (totaisIndividuais[i] || 0) + (totaisIndividuais[i+1] || 0);
+                    totaisPorTipo.push(totalTipo);
+                    html += `<td colspan='2' style='font-size:1em;color:#b85c00;font-weight:700;background:#fffbe6;'>R$ ${totalTipo.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>`;
+                }
+                html += '</tr>';
+
+                // Linha final: valor total geral
+                let valorTotal = totaisPorTipo.reduce((acc, v) => acc + v, 0);
+                html += `<tr><td colspan='8' style='font-size:1.08em;color:#fff;background:#007bff;font-weight:700;text-align:right;'>Valor Total: R$ ${valorTotal.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}</td></tr>`;
+
+                html += '</tbody></table>';
+                resumoSomas.innerHTML = html;
+            }
 
             // Abrir/fechar popups
             btnAbrirPresidio.onclick = () => {
@@ -202,11 +383,24 @@
                 opcoesPresidio.querySelectorAll('input[type=checkbox]').forEach(chk => chk.checked = false);
                 opcoesData.querySelectorAll('input[type=checkbox]').forEach(chk => chk.checked = false);
                 linhas.forEach(tr => tr.style.display = '');
+                atualizarResumoSomas();
             };
 
-            // Aplicar filtros
-            btnFiltrar.onclick = () => {
+            // Aplicar filtro de presídio
+            btnFiltrarPresidio.onclick = () => {
                 selecionadosPresidio = Array.from(opcoesPresidio.querySelectorAll('input[type=checkbox]:checked')).map(chk => chk.value);
+                linhas.forEach(tr => {
+                    const pres = tr.children[colPresidio]?.textContent.trim();
+                    const data = tr.children[colData]?.textContent.trim();
+                    const matchPres = selecionadosPresidio.length === 0 || selecionadosPresidio.includes(pres);
+                    const matchData = selecionadosData.length === 0 || selecionadosData.includes(data);
+                    tr.style.display = (matchPres && matchData) ? '' : 'none';
+                });
+                atualizarResumoSomas();
+                popupPresidio.style.display = 'none';
+            };
+            // Aplicar filtro de data
+            btnFiltrarData.onclick = () => {
                 selecionadosData = Array.from(opcoesData.querySelectorAll('input[type=checkbox]:checked')).map(chk => chk.value);
                 linhas.forEach(tr => {
                     const pres = tr.children[colPresidio]?.textContent.trim();
@@ -215,15 +409,72 @@
                     const matchData = selecionadosData.length === 0 || selecionadosData.includes(data);
                     tr.style.display = (matchPres && matchData) ? '' : 'none';
                 });
+                atualizarResumoSomas();
+                popupData.style.display = 'none';
             };
+
+            // Inicializa o resumo ao carregar
+            atualizarResumoSomas();
         }
         document.addEventListener('DOMContentLoaded', criarFiltroPopupSeparado);
 
+        // Marcação persistente de célula amarela
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabela = document.querySelector('.tabela-renderizada table');
+            if (!tabela) return;
+            tabela.addEventListener('dblclick', function(e) {
+                let td = e.target;
+                if (td.tagName !== 'TD') return;
+                // Descobre linha e coluna da célula (tbody apenas)
+                const tr = td.parentElement;
+                const tbody = tabela.querySelector('tbody');
+                const trs = Array.from(tbody.children).filter(el => el.tagName === 'TR');
+                const rowIdx = trs.indexOf(tr);
+                const colIdx = Array.from(tr.children).indexOf(td);
+                // Descobre se coluna é x SIISP
+                const ths = tabela.querySelectorAll('thead th');
+                const colName = ths[colIdx]?.textContent.trim().toLowerCase();
+                if (colName && colName.endsWith('x siisp')) {
+                    // Não permite anotação persistente nessas colunas
+                    return;
+                }
+                // Descobre presídio
+                let idxPresidio = -1;
+                ths.forEach((th, i) => {
+                    if (th.textContent.trim().toLowerCase() === 'presídio') idxPresidio = i;
+                });
+                let presidio = '';
+                if (idxPresidio >= 0) {
+                    presidio = tr.children[idxPresidio]?.textContent.trim();
+                }
+                const mes = window.mesAtual;
+                const ano = window.anoAtual;
+                fetch('/anotar_celula', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ presidio, mes, ano, linha: rowIdx, coluna: colIdx })
+                })
+                .then(resp => resp.json())
+                .then(data => {
+                    if (data.ok) {
+                        if (data.marcado) {
+                            td.classList.add('celula-anotada');
+                        } else {
+                            td.classList.remove('celula-anotada');
+                        }
+                    } else {
+                        alert('Erro ao anotar célula: ' + (data.msg || ''));
+                    }
+                })
+                .catch(() => alert('Erro de comunicação com o servidor.'));
+            });
+        });
+
         // Adicionar/Editar Dados
+
         const popup = document.getElementById('popup');
         document.getElementById('btnAdd').onclick = () => {
             document.getElementById('presidio').value = '';
-            document.getElementById('texto').value = '';
             popup.classList.add('ativo');
         };
         document.getElementById('btnClose').onclick = () => popup.classList.remove('ativo');
@@ -241,14 +492,6 @@
             document.getElementById('ano_hidden').value = this.value;
         });
 
-        // Preencher texto ao selecionar presídio para editar
-        const dadosEdit = JSON.parse(document.getElementById('dados-json').textContent);
-        document.getElementById('presidio').onchange = function() {
-            const pres = this.value;
-            const item = dadosEdit.find(d => d.presidio === pres);
-            document.getElementById('texto').value = item ? item.texto : '';
-        };
-
         // Excluir Dados
         const popupDelete = document.getElementById('popupDelete');
         document.getElementById('btnDelete').onclick = () => {
@@ -261,4 +504,15 @@
         });
     </script>
 </body>
+    <script>
+    // Popup Adicionar Manualmente (padrão igual aos outros)
+    const popupManualAdd = document.getElementById('popupManualAdd');
+    document.getElementById('btnAddManual').onclick = () => {
+        popupManualAdd.classList.add('ativo');
+    };
+    document.getElementById('btnCloseManualAdd').onclick = () => popupManualAdd.classList.remove('ativo');
+    popupManualAdd.addEventListener('click', function(e) {
+        if (e.target === popupManualAdd) popupManualAdd.classList.remove('ativo');
+    });
+    </script>
 </html>
