@@ -1,3 +1,104 @@
+/* Top bar para alinhar botão voltar à esquerda e filtro à direita */
+.top-bar-seap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 18px;
+    margin-top: 18px;
+    gap: 18px;
+}
+.top-bar-seap .voltar {
+    margin-top: 0;
+    margin-bottom: 0;
+    position: static;
+}
+.top-bar-seap #filtro-form {
+    background: #f5f5f5;
+    border-radius: 8px;
+    padding: 4px 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 1.05rem;
+}
+/* Estilo aprimorado para barra de filtros */
+.filtros-popup-bar {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 22px;
+    margin-top: 0;
+    background: linear-gradient(90deg, #e3f0ff 60%, #f5faff 100%);
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(0,123,255,0.08);
+    padding: 18px 28px 18px 18px;
+    font-size: 1.13rem;
+}
+.filtros-popup-bar button {
+    background: linear-gradient(90deg, #007bff 60%, #00c6ff 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 28px;
+    font-size: 1.09rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    outline: none;
+    margin-right: 0;
+}
+.filtros-popup-bar button:hover {
+    background: linear-gradient(90deg, #00c6ff 60%, #007bff 100%);
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+}
+.filtros-popup-bar button#limpar-filtros {
+    background: linear-gradient(90deg, #e0e0e0 60%, #f6f6f6 100%);
+    color: #333;
+}
+.filtros-popup-bar button#limpar-filtros:hover {
+    background: linear-gradient(90deg, #f6f6f6 60%, #e0e0e0 100%);
+}
+
+/* Popup de filtros aprimorado */
+.popup-filtros-content {
+    background: linear-gradient(120deg, #f5faff 60%, #e3f0ff 100%);
+    padding: 36px 36px 28px 36px;
+    border-radius: 18px;
+    min-width: 340px;
+    max-width: 98vw;
+    box-shadow: 0 6px 32px rgba(0,123,255,0.13);
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    animation: popupFadeIn 0.25s;
+    position: relative;
+}
+.popup-filtros-content h3 {
+    margin-top: 0;
+    color: #007bff;
+    font-size: 1.25rem;
+    text-align: center;
+}
+.popup-filtros-content .popup-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #007bff;
+    cursor: pointer;
+    font-weight: bold;
+    transition: color 0.2s;
+    z-index: 10;
+}
+.popup-filtros-content .popup-close:hover {
+    color: #b30000;
+}
 /* lote.css: estilos exclusivos para lote1.html */
 
 .lote-header {
@@ -165,14 +266,14 @@
 
 .dados-container {
     display: flex;
-    flex-direction: row;
-    gap: 32px;
+    flex-direction: column;
+    gap: 18px;
     justify-content: flex-start;
-    align-items: flex-start;
+    align-items: stretch;
     min-height: 350px;
     width: 100%;
     max-width: 1200px;
-    margin: 0;
+    margin: 0 auto;
 }
 .dado {
     flex: 1 1 0;
@@ -184,11 +285,11 @@
 }
 
 .tabela-renderizada {
-    margin: 18px 0 10px 0;
-    width: 50%;
+    margin: 0 0 10px 0;
+    width: 100%;
     min-width: 220px;
     max-width: 100%;
-    float: left;
+    float: none;
     text-align: left;
 }
 .tabela-renderizada table.tabela-extraida {
@@ -239,14 +340,28 @@
 /* Conteúdo do popup */
 .popup-content {
     background: #fff;
-    padding: 25px 20px;
-    border-radius: 10px;
-    width: 320px;
+    padding: 28px 24px;
+    border-radius: 12px;
+    min-width: 320px;
+    max-width: 95vw;
+    width: 400px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     animation: popupFadeIn 0.3s ease;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+.popup-content label, .popup-content textarea, .popup-content select, .popup-content input {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+}
+.popup-content textarea {
+    resize: vertical;
+    min-height: 60px;
+    max-height: 200px;
 }
 
 /* Botões do popup */

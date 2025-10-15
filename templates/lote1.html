@@ -8,33 +8,67 @@
 </head>
 <body>
 
-    <!-- Filtro de mês e ano no canto superior direito -->
-    <form id="filtro-form" method="get" style="position: fixed; top: 16px; right: 18px; z-index: 2100; background: #f5f5f5; border-radius: 8px; padding: 4px 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; gap: 8px; align-items: center; font-size: 1.05rem;">
-        <label for="mes" style="margin:0;">Mês:</label>
-        <select name="mes" id="mes">
-            {% set meses_nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] %}
-            {% for m in meses %}
-                <option value="{{ m }}" {% if m == mes %}selected{% endif %}>{{ meses_nomes[m-1] }}</option>
-            {% endfor %}
-        </select>
-        <label for="ano" style="margin:0;">Ano:</label>
-        <select name="ano" id="ano">
-            <option value="2025" selected>2025</option>
-        </select>
-        <button type="submit" style="padding:2px 10px; font-size:0.98rem;">Filtrar</button>
-    </form>
+    <!-- Topo da página: botão voltar à esquerda e filtro de mês/ano à direita -->
+    <div class="top-bar-seap">
+        <a href="/?mes={{ mes }}&ano={{ ano }}" class="voltar">&larr; Voltar</a>
+        <form id="filtro-form" method="get">
+            <label for="mes" style="margin:0;">Mês:</label>
+            <select name="mes" id="mes">
+                {% set meses_nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] %}
+                {% for m in meses %}
+                    <option value="{{ m }}" {% if m == mes %}selected{% endif %}>{{ meses_nomes[m-1] }}</option>
+                {% endfor %}
+            </select>
+            <label for="ano" style="margin:0;">Ano:</label>
+            <select name="ano" id="ano">
+                <option value="2025" selected>2025</option>
+            </select>
+            <button type="submit" style="padding:2px 10px; font-size:0.98rem;">Filtrar</button>
+        </form>
+    </div>
 
     <div class="lote-header">
         <h1>Lote 1 - Empresa Alpha</h1>
         <p>Contrato nº 2025/001 | Portaria 1234/2025</p>
     </div>
 
-
+    <!-- Botões de ação acima do filtro e tabela -->
     <div class="actions">
         <button id="btnAdd" type="button">Adicionar/Editar Dados</button>
         <button id="btnDelete" type="button">Excluir Dados</button>
     </div>
-
+    <!-- Filtro de tabela e tabela renderizada -->
+    <div class="dados-container">
+        {% if tabela_unica_html %}
+            <div class="filtros-popup-bar" style="gap: 10px;">
+                <button id="abrir-filtro-presidio" type="button">Filtrar Presídio</button>
+                <button id="abrir-filtro-data" type="button">Filtrar Data</button>
+                <button id="aplicar-filtros" type="button" style="background:#007bff;color:#fff;">Filtrar</button>
+                <button id="limpar-filtros" type="button" style="background:#e0e0e0;color:#333;">Limpar seleção</button>
+            </div>
+            <!-- Popup filtro presídio -->
+            <div id="popup-filtro-presidio" class="popup-filtros">
+                <div class="popup-filtros-content">
+                    <button type="button" class="popup-close" id="close-popup-presidio">×</button>
+                    <h3>Selecione o(s) Presídio(s)</h3>
+                    <div class="filtros-opcoes" id="filtros-presidio-opcoes"></div>
+                </div>
+            </div>
+            <!-- Popup filtro data -->
+            <div id="popup-filtro-data" class="popup-filtros">
+                <div class="popup-filtros-content">
+                    <button type="button" class="popup-close" id="close-popup-data">×</button>
+                    <h3>Selecione a(s) Data(s)</h3>
+                    <div class="filtros-opcoes" id="filtros-data-opcoes"></div>
+                </div>
+            </div>
+            <div class="tabela-renderizada" style="width:100%;max-width:none;">
+                {{ tabela_unica_html|safe }}
+            </div>
+        {% elif not dados %}
+            <p>Nenhum dado adicionado ainda.</p>
+        {% endif %}
+    </div>
 
     <!-- Popup Adicionar/Editar -->
     <div id="popup" class="popup">
@@ -58,8 +92,6 @@
 
             <label for="texto">Observação (opcional):</label>
             <textarea name="texto" id="texto"></textarea>
-
-            <label for="tabela">Tabela (obrigatória):</label>
             <textarea name="tabela" id="tabela" placeholder="Cole aqui a tabela extraída do PDF..." required></textarea>
 
             <div class="popup-buttons">
@@ -88,44 +120,13 @@
         </form>
     </div>
 
-    <h3>Dados adicionados:</h3>
-    <div class="dados-container">
-        {% if tabela_unica_html %}
-            <div class="filtros-popup-bar">
-                <button id="abrir-filtros" type="button">Filtrar Dados &#x25BC;</button>
-                <span id="resumo-filtros" style="margin-left:12px;color:#007bff;font-weight:500;"></span>
-            </div>
-            <div id="popup-filtros" class="popup-filtros">
-                <div class="popup-filtros-content">
-                    <h3>Filtrar Dados</h3>
-                    <div class="filtros-grupo">
-                        <label>Presídio:</label>
-                        <div id="filtros-presidio-opcoes" class="filtros-opcoes"></div>
-                    </div>
-                    <div class="filtros-grupo">
-                        <label>Data:</label>
-                        <div id="filtros-data-opcoes" class="filtros-opcoes"></div>
-                    </div>
-                    <div class="popup-filtros-botoes">
-                        <button id="limpar-filtros" type="button">Limpar</button>
-                        <button id="aplicar-filtros" type="button">Filtrar</button>
-                    </div>
-                </div>
-            </div>
-            <div class="tabela-renderizada" style="width:100%;max-width:none;">
-                {{ tabela_unica_html|safe }}
-            </div>
-        {% elif not dados %}
-            <p>Nenhum dado adicionado ainda.</p>
-        {% endif %}
-    </div>
+    <!-- Removido bloco duplicado de tabela/dados -->
 
-    <a href="/?mes={{ mes }}&ano={{ ano }}" class="voltar voltar-topo">&larr; Voltar</a>
     <script id="dados-json" type="application/json">{{ dados|tojson|safe }}</script>
     <script>
 
-        // Filtro popup interativo multiplo
-        function criarFiltroPopup() {
+        // Filtro popup separado para presídio e data
+        function criarFiltroPopupSeparado() {
             const tabela = document.querySelector('.tabela-renderizada table');
             if (!tabela) return;
             const linhas = Array.from(tabela.querySelectorAll('tbody tr'));
@@ -134,14 +135,16 @@
             const presidios = [...new Set(linhas.map(tr => tr.children[colPresidio]?.textContent.trim()))].filter(Boolean);
             const datas = [...new Set(linhas.map(tr => tr.children[colData]?.textContent.trim()))].filter(Boolean);
 
-            // Elementos do popup
-            const btnAbrir = document.getElementById('abrir-filtros');
-            const popup = document.getElementById('popup-filtros');
+            // Elementos dos popups
+            const btnAbrirPresidio = document.getElementById('abrir-filtro-presidio');
+            const btnAbrirData = document.getElementById('abrir-filtro-data');
+            const popupPresidio = document.getElementById('popup-filtro-presidio');
+            const popupData = document.getElementById('popup-filtro-data');
             const opcoesPresidio = document.getElementById('filtros-presidio-opcoes');
             const opcoesData = document.getElementById('filtros-data-opcoes');
             const btnLimpar = document.getElementById('limpar-filtros');
             const btnFiltrar = document.getElementById('aplicar-filtros');
-            const resumoFiltros = document.getElementById('resumo-filtros');
+            // const resumoFiltros = document.getElementById('resumo-filtros');
 
             // Preencher opções
             function criarCheckboxes(lista, container, grupo) {
@@ -166,23 +169,39 @@
             let selecionadosPresidio = [];
             let selecionadosData = [];
 
-            // Abrir/fechar popup
-            btnAbrir.onclick = () => {
-                popup.style.display = 'flex';
-                // Marcar checkboxes conforme seleção atual
+            // Abrir/fechar popups
+            btnAbrirPresidio.onclick = () => {
+                popupPresidio.style.display = 'flex';
                 opcoesPresidio.querySelectorAll('input[type=checkbox]').forEach(chk => {
                     chk.checked = selecionadosPresidio.includes(chk.value);
                 });
+            };
+            btnAbrirData.onclick = () => {
+                popupData.style.display = 'flex';
                 opcoesData.querySelectorAll('input[type=checkbox]').forEach(chk => {
                     chk.checked = selecionadosData.includes(chk.value);
                 });
             };
-            popup.onclick = e => { if (e.target === popup) popup.style.display = 'none'; };
+            popupPresidio.onclick = e => { if (e.target === popupPresidio) popupPresidio.style.display = 'none'; };
+            popupData.onclick = e => { if (e.target === popupData) popupData.style.display = 'none'; };
+            document.getElementById('close-popup-presidio').onclick = () => { popupPresidio.style.display = 'none'; };
+            document.getElementById('close-popup-data').onclick = () => { popupData.style.display = 'none'; };
+
+            // Seleção dos checkboxes
+            opcoesPresidio.onclick = () => {
+                selecionadosPresidio = Array.from(opcoesPresidio.querySelectorAll('input[type=checkbox]:checked')).map(chk => chk.value);
+            };
+            opcoesData.onclick = () => {
+                selecionadosData = Array.from(opcoesData.querySelectorAll('input[type=checkbox]:checked')).map(chk => chk.value);
+            };
 
             // Limpar filtros
             btnLimpar.onclick = () => {
+                selecionadosPresidio = [];
+                selecionadosData = [];
                 opcoesPresidio.querySelectorAll('input[type=checkbox]').forEach(chk => chk.checked = false);
                 opcoesData.querySelectorAll('input[type=checkbox]').forEach(chk => chk.checked = false);
+                linhas.forEach(tr => tr.style.display = '');
             };
 
             // Aplicar filtros
@@ -196,15 +215,9 @@
                     const matchData = selecionadosData.length === 0 || selecionadosData.includes(data);
                     tr.style.display = (matchPres && matchData) ? '' : 'none';
                 });
-                // Resumo
-                let resumo = [];
-                if (selecionadosPresidio.length) resumo.push('Presídio: ' + selecionadosPresidio.join(', '));
-                if (selecionadosData.length) resumo.push('Data: ' + selecionadosData.join(', '));
-                resumoFiltros.textContent = resumo.length ? resumo.join(' | ') : '';
-                popup.style.display = 'none';
             };
         }
-        document.addEventListener('DOMContentLoaded', criarFiltroPopup);
+        document.addEventListener('DOMContentLoaded', criarFiltroPopupSeparado);
 
         // Adicionar/Editar Dados
         const popup = document.getElementById('popup');
