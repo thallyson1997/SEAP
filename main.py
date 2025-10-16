@@ -1,19 +1,124 @@
 
-from flask import Flask, render_template, request, redirect, url_for, jsonify
 
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import json
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), 'funcoes'))
-
 from funcoes.tabular import extrair_tabela_dados
 from funcoes.unir_tabelas import unir_tabelas_html
 from funcoes.tabular_siisp import tratar_siisp_texto
 from bs4 import BeautifulSoup
 
-
-
 app = Flask(__name__)
+
+# Função para processar tabela manual
+def processar_tabela_manual(form):
+    colunas = [
+        'Café Interno', 'Café Funcionário',
+        'Almoço Interno', 'Almoço Funcionário',
+        'Lanche Interno', 'Lanche Funcionário',
+        'Jantar Interno', 'Jantar Funcionário'
+    ]
+    dias = []
+    dados = []
+    for i in range(1, 32):
+        dia = form.get(f'dia_{i}')
+        if not dia:
+            continue
+        linha = []
+        for col in colunas:
+            val = form.get(f'{col}_{i}')
+            if val is None or val.strip() == '':
+                val = 0
+            else:
+                try:
+                    val = int(float(val.replace(',', '.')))
+                except:
+                    val = 0
+            linha.append(val)
+        dias.append(dia)
+        dados.append(linha)
+    import pandas as pd
+    df = pd.DataFrame(dados, columns=colunas)
+    df.insert(0, 'Dia', dias)
+    return df
+
+# Endpoint para adição manual
+@app.route('/adicionar_manual', methods=['POST'])
+def adicionar_manual():
+    df = processar_tabela_manual(request.form)
+    presidio = request.form.get('presidioManualAdd')
+    mes = request.args.get('mes', type=int) or request.form.get('mes', type=int) or None
+    ano = request.args.get('ano', type=int) or request.form.get('ano', type=int) or None
+    if not mes:
+        from datetime import datetime
+        mes = datetime.now().month
+    if not ano:
+        ano = 2025
+
+    # Monta coluna Data formatada
+    from datetime import datetime as dtmod
+    dias = df['Dia'].tolist()
+    # Se o valor já está no formato '01/09/2025', usa direto, senão monta corretamente
+    datas = []
+    for dia in dias:
+        if isinstance(dia, str) and '/' in dia:
+            partes = dia.split('/')
+            if len(partes) == 3:
+                datas.append(dia)
+            else:
+                datas.append(f"{str(dia).zfill(2)}/{str(mes).zfill(2)}/{ano}")
+        else:
+            datas.append(f"{str(dia).zfill(2)}/{str(mes).zfill(2)}/{ano}")
+    df.drop(columns=['Dia'], inplace=True)
+    df.insert(0, 'Data', datas)
+    # Coluna Presídio
+    df.insert(1, 'Presídio', [presidio]*len(df))
+    # Coluna n° SIISP: se siisp é null, preenche com 0
+    siisp_valor = 0 if request.form.get('siisp') is None else request.form.get('siisp')
+    df.insert(2, 'n° SIISP', [siisp_valor]*len(df))
+
+    # Adiciona as 8 colunas extras x SIISP igual ao mapa automático, calculando Interno - SIISP (SIISP=0 padrão)
+    colunas_refeicao = [
+        "Café Interno",
+        "Café Funcionário",
+        "Almoço Interno",
+        "Almoço Funcionário",
+        "Lanche Interno",
+        "Lanche Funcionário",
+        "Jantar Interno",
+        "Jantar Funcionário"
+    ]
+    nomes_siisp = []
+    for col in colunas_refeicao:
+        nome_siisp = f"{col} x SIISP"
+        nomes_siisp.append(nome_siisp)
+        # SIISP padrão = 0
+        if col.endswith("Interno"):
+            df[nome_siisp] = df[col] - 0
+        else:
+            df[nome_siisp] = df[col] - 0
+    # Reordena para garantir que as colunas x SIISP fiquem no final
+    cols_ordem = [c for c in df.columns if c not in nomes_siisp] + nomes_siisp
+    df = df[cols_ordem]
+
+    tabela_html = df.to_html(index=False, classes='dataframe tabela-extraida')
+
+    dados = ler_dados()
+    dados = [item for item in dados if not (item['presidio'] == presidio and item.get('mes') == mes and item.get('ano') == ano)]
+    novo_item = {
+        'presidio': presidio,
+        'texto': None,
+        'tabela_html': tabela_html,
+        'mes': mes,
+        'ano': ano,
+        'siisp': None
+    }
+    dados.append(novo_item)
+    salvar_dados(dados)
+    # Redireciona para a página do lote1 após salvar
+    return redirect(url_for('lote1', mes=mes, ano=ano))
 
 # Caminho do arquivo de dados
 CAMINHO_DADOS = os.path.join(os.path.dirname(__file__), 'dados', 'lote1.json')
@@ -90,6 +195,14 @@ def lote1():
         dias_no_mes = calendar.monthrange(ano, mes)[1]
     except Exception:
         dias_no_mes = 31
+    # Carrega lista de presídios do arquivo presidios.json
+    caminho_presidios = os.path.join(os.path.dirname(__file__), 'presidios.json')
+    try:
+        with open(caminho_presidios, encoding='utf-8') as f:
+            presidios_json = json.load(f)
+            presidios_lote1 = presidios_json.get('lote1', [])
+    except Exception:
+        presidios_lote1 = []
     if request.method == 'POST':
         acao = request.form.get('acao')
         # Novo: Adicionar SIISP
@@ -203,7 +316,10 @@ def lote1():
                     sucesso = f'Dado do presídio "{presidio}" excluído com sucesso.'
                 else:
                     erro = f'Presídio não encontrado para exclusão.'
-                return redirect(url_for('lote1'))
+                # Redireciona mantendo mês e ano atuais
+                mes_filtro = request.form.get('mes', type=int) or request.args.get('mes', type=int) or 1
+                ano_filtro = request.form.get('ano', type=int) or request.args.get('ano', type=int) or 2025
+                return redirect(url_for('lote1', mes=mes_filtro, ano=ano_filtro))
 
     from datetime import datetime
     now = datetime.now()
@@ -240,7 +356,6 @@ def lote1():
         # Para funcionário, precisamos também do índice SIISP correspondente
         idxs_siisp = {}
         for nome_func, nome_interno in zip(nomes_funcionario_xsiisp, nomes_interno_xsiisp):
-            # Ex: 'café funcionário x siisp' -> 'café interno x siisp'
             idx_func = ths.index(nome_func) if nome_func in ths else None
             idx_siisp = ths.index('n° siisp') if 'n° siisp' in ths else None
             idxs_siisp[nome_func] = idx_siisp
@@ -248,11 +363,12 @@ def lote1():
         anotacoes_map = {item['presidio']: item.get('anotacoes', {}) for item in dados_filtrados}
         for tr in soup.find_all('tr'):
             tds = tr.find_all(['td', 'th'])
-            # Descobre presídio da linha (se existir coluna Presídio)
             idx_presidio = next((i for i, th in enumerate(ths) if th == 'presídio'), None)
             pres = tds[idx_presidio].text.strip() if idx_presidio is not None and idx_presidio < len(tds) else None
             anotacoes = anotacoes_map.get(pres, {}) if pres else {}
             row_idx = tr.parent.find_all('tr').index(tr)
+            # Guardar quais células vão receber OK
+            verde_cells = set()
             for col_idx, td in enumerate(tds):
                 key = f'{row_idx}|{col_idx}'
                 if anotacoes.get(key):
@@ -264,6 +380,7 @@ def lote1():
                         val = int(tds[idx].text.strip())
                         if val <= 0:
                             tds[idx]['class'] = tds[idx].get('class', []) + ['xsiisp-verde']
+                            verde_cells.add(idx)
                         elif 1 <= val <= 5:
                             tds[idx]['class'] = tds[idx].get('class', []) + ['xsiisp-azul']
                         elif val > 5:
@@ -277,14 +394,25 @@ def lote1():
                     idx_siisp = idxs_siisp.get(nome_col)
                     try:
                         val_func = int(tds[idx].text.strip())
-                        val_siisp = int(tds[idx_siisp].text.strip()) if idx_siisp is not None and idx_siisp < len(tds) else None
-                        if val_siisp is not None:
-                            if val_func < val_siisp:
-                                tds[idx]['class'] = tds[idx].get('class', []) + ['xsiisp-verde']
-                            else:
-                                tds[idx]['class'] = tds[idx].get('class', []) + ['xsiisp-vermelho']
                     except Exception:
-                        pass
+                        val_func = 0
+                    # Trata SIISP como 0 se não houver valor
+                    if idx_siisp is not None and idx_siisp < len(tds):
+                        try:
+                            val_siisp = int(tds[idx_siisp].text.strip())
+                        except Exception:
+                            val_siisp = 0
+                    else:
+                        val_siisp = 0
+                    if val_func < val_siisp:
+                        tds[idx]['class'] = tds[idx].get('class', []) + ['xsiisp-verde']
+                        verde_cells.add(idx)
+                    else:
+                        tds[idx]['class'] = tds[idx].get('class', []) + ['xsiisp-vermelho']
+            # Substitui valor por 'OK' nas células verdes
+            for idx in verde_cells:
+                if idx < len(tds):
+                    tds[idx].string = 'OK'
         tabela_unica_html = str(soup)
     # Carrega preços do lote1
     precos_lote1 = {}
@@ -299,7 +427,7 @@ def lote1():
         precos_lote1 = {}
     if not isinstance(precos_lote1, dict):
         precos_lote1 = {}
-    return render_template('lote1.html', dados=dados_filtrados, tabela_unica_html=tabela_unica_html, erro=erro, sucesso=sucesso, meses=meses, mes=mes, ano=ano, precos_lote1=precos_lote1, dias_no_mes=dias_no_mes)
+    return render_template('lote1.html', dados=dados_filtrados, tabela_unica_html=tabela_unica_html, erro=erro, sucesso=sucesso, meses=meses, mes=mes, ano=ano, precos_lote1=precos_lote1, dias_no_mes=dias_no_mes, presidios=presidios_lote1)
 
 if __name__ == '__main__':
     app.run(debug=True)

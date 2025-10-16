@@ -13,15 +13,17 @@
 <body>
     <!-- Popup Adicionar Manualmente -->
     <div id="popupManualAdd" class="popup">
-    <form class="popup-content" onsubmit="return false;" style="max-width:1100px;min-width:700px;width:90vw;">
+    <form class="popup-content" id="formManualAdd" method="POST" action="/adicionar_manual" style="max-width:700px;min-width:400px;width:60vw;">
             <h2>Adicionar Manualmente</h2>
+            <input type="hidden" name="mes" id="mes_manual_hidden" value="{{ mes }}">
+            <input type="hidden" name="ano" id="ano_manual_hidden" value="{{ ano }}">
             <label for="presidioManualAdd">Selecione o Presídio:</label>
-            <select name="presidioManualAdd" id="presidioManualAdd" required>
-                <option value="">Selecione...</option>
-                <option value="Presídio Central">Presídio Central</option>
-                <option value="Penitenciária Alfa">Penitenciária Alfa</option>
-                <option value="Colônia Beta">Colônia Beta</option>
-            </select>
+                <select name="presidioManualAdd" id="presidioManualAdd" required>
+                    <option value="">Selecione...</option>
+                    {% for p in presidios %}
+                    <option value="{{ p }}">{{ p }}</option>
+                    {% endfor %}
+                </select>
             <div id="conteudoManualAdd" style="margin-top:16px;"></div>
             {% set colunas = [
                 'Café Interno', 'Café Funcionário',
@@ -32,24 +34,38 @@
             <table id="tabelaManualInput" style="width:100%;margin:18px 0;border-collapse:collapse;">
                 <thead>
                     <tr>
-                        <th>Dia</th>
+                        <th style="padding:0;">Dia</th>
                         {% for col in colunas %}
-                        <th>{{ col }}</th>
+                        <th style="padding:0;">{{ col }}</th>
                         {% endfor %}
                     </tr>
                 </thead>
                 <tbody>
                     {% for dia in range(1, dias_no_mes + 1) %}
                     <tr>
-                        <td>{{ dia }}</td>
+                        <td style="padding:0;">
+                            <input type="text" name="dia_{{ dia }}" value="{{ dia }}" style="width:40px;padding:1px 2px;font-size:0.92em;height:12px;line-height:16px;" />
+                        </td>
                         {% for col in colunas %}
-                        <td><input type="text" style="width:90%;padding:1px 2px;font-size:0.92em;height:18px;line-height:16px;" /></td>
+                        <td style="padding:0;">
+                            <input type="text" name="{{ col }}_{{ dia }}" style="width:60%;padding:1px 2px;font-size:0.92em;height:12px;line-height:16px;" />
+                        </td>
                         {% endfor %}
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+            <style>
+            #tabelaManualInput {
+                border-collapse: collapse !important;
+            }
+            #tabelaManualInput td, #tabelaManualInput th {
+                padding: 0 !important;
+            }
+            </style>
+            </table>
             <div class="popup-buttons">
+                <button type="submit" id="btnSalvarManualAdd">Salvar</button>
                 <button type="button" id="btnCloseManualAdd">Cancelar</button>
             </div>
         </form>
@@ -94,9 +110,9 @@
             <label for="siisp_presidio">Presídio:</label>
             <select id="siisp_presidio" name="siisp_presidio">
                 <option value="">Selecione...</option>
-                <option value="Presídio Central">Presídio Central</option>
-                <option value="Penitenciária Alfa">Penitenciária Alfa</option>
-                <option value="Colônia Beta">Colônia Beta</option>
+                {% for p in presidios %}
+                <option value="{{ p }}">{{ p }}</option>
+                {% endfor %}
             </select>
             <label for="siisp_texto">Números SIISP:</label>
             <textarea id="siisp_texto" name="siisp_texto" placeholder="Digite os números SIISP..."></textarea>
@@ -107,6 +123,46 @@
         </form>
     </div>
     <script>
+    // Colagem inteligente na tabela do popup Adicionar Manualmente
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabela = document.getElementById('tabelaManualInput');
+        if (!tabela) return;
+        tabela.addEventListener('paste', function(e) {
+            const target = e.target;
+            if (target.tagName !== 'INPUT') return;
+            e.preventDefault();
+            const clipboard = e.clipboardData || window.clipboardData;
+            const texto = clipboard.getData('text');
+            // Divide por linhas e colunas (tab/enter)
+            const linhas = texto.split(/\r?\n/).filter(l => l.length > 0);
+            const celulas = linhas.map(l => l.split(/\t|;/));
+            // Descobre posição inicial
+            let td = target.parentElement;
+            let tr = td.parentElement;
+            const rowIndex = Array.from(tabela.tBodies[0].rows).indexOf(tr);
+            const colIndex = Array.from(tr.cells).indexOf(td);
+            // Preenche os inputs
+            for (let i = 0; i < celulas.length; i++) {
+                const linha = tabela.tBodies[0].rows[rowIndex + i];
+                if (!linha) break;
+                for (let j = 0; j < celulas[i].length; j++) {
+                    const cell = linha.cells[colIndex + j];
+                    if (!cell) break;
+                    const input = cell.querySelector('input');
+                    if (input) input.value = celulas[i][j];
+                }
+            }
+        }, true);
+
+        // Submete o formulário manual corretamente
+        const formManualAdd = document.getElementById('formManualAdd');
+        if (formManualAdd) {
+            formManualAdd.onsubmit = function(e) {
+                // Permite submit normal (POST)
+                return true;
+            };
+        }
+    });
         // Popup Adicionar SIISP
         const btnAddSiisp = document.getElementById('btnAddSiisp');
         const popupSiisp = document.getElementById('popupSiisp');
@@ -175,9 +231,9 @@
             <label for="presidio">Selecione o Presídio:</label>
             <select name="presidio" id="presidio" required>
                 <option value="">Selecione...</option>
-                <option value="Presídio Central">Presídio Central</option>
-                <option value="Penitenciária Alfa">Penitenciária Alfa</option>
-                <option value="Colônia Beta">Colônia Beta</option>
+                {% for p in presidios %}
+                <option value="{{ p }}">{{ p }}</option>
+                {% endfor %}
             </select>
 
 
@@ -199,9 +255,9 @@
             <label for="presidio_excluir">Selecione o Presídio:</label>
             <select name="presidio_excluir" id="presidio_excluir" required>
                 <option value="">Selecione...</option>
-                <option value="Presídio Central">Presídio Central</option>
-                <option value="Penitenciária Alfa">Penitenciária Alfa</option>
-                <option value="Colônia Beta">Colônia Beta</option>
+                {% for p in presidios %}
+                <option value="{{ p }}">{{ p }}</option>
+                {% endfor %}
             </select>
             <div class="popup-buttons">
                 <button type="submit" style="background:#b30000;">Excluir</button>
@@ -289,15 +345,39 @@
                     const idx = idxs[t.col];
                     if (idx >= 0) {
                         linhasVisiveis.forEach(tr => {
-                            const val = tr.children[idx]?.textContent.replace(/\./g,'').replace(',','.').replace(/[^\d.-]/g,'');
+                            // Corrigido: só troca vírgula por ponto, preserva ponto decimal
+                            const val = tr.children[idx]?.textContent.replace(',','.').replace(/[^\d.-]/g,'');
                             const num = parseFloat(val);
                             if (!isNaN(num)) soma += num;
                         });
                     }
                     somas[t.col] = soma;
                 });
-                // Preços fixos do backend (inseridos no template)
-                // Monta a tabela
+                // Cálculo do desvio: soma de cada coluna "X x SIISP" multiplicada pelo respectivo preço
+                let valorDesvio = 0;
+                const colunasSiisp = [
+                    {col: 'Café Interno x SIISP', preco: precos['Café Interno'] || 0},
+                    {col: 'Café Funcionário x SIISP', preco: precos['Café Funcionário'] || 0},
+                    {col: 'Almoço Interno x SIISP', preco: precos['Almoço Interno'] || 0},
+                    {col: 'Almoço Funcionário x SIISP', preco: precos['Almoço Funcionário'] || 0},
+                    {col: 'Lanche Interno x SIISP', preco: precos['Lanche Interno'] || 0},
+                    {col: 'Lanche Funcionário x SIISP', preco: precos['Lanche Funcionário'] || 0},
+                    {col: 'Jantar Interno x SIISP', preco: precos['Jantar Interno'] || 0},
+                    {col: 'Jantar Funcionário x SIISP', preco: precos['Jantar Funcionário'] || 0}
+                ];
+                colunasSiisp.forEach(obj => {
+                    const idx = ths.findIndex(th => th.textContent.trim() === obj.col);
+                    if (idx === -1) return;
+                    let soma = 0;
+                    linhasVisiveis.forEach(tr => {
+                        const val = tr.children[idx]?.textContent.replace(',','.').replace(/[^\d.-]/g,'');
+                        const num = parseFloat(val);
+                        if (!isNaN(num)) soma += num;
+                    });
+                    valorDesvio += soma * obj.preco;
+                });
+
+                // Monta a tabela resumo normalmente
                 let html = '<table class="mini-resumo"><thead><tr>';
                 ['Café','Almoço','Lanche','Jantar'].forEach(grupo => {
                     html += `<th colspan=2>${grupo}</th>`;
@@ -342,9 +422,14 @@
                 }
                 html += '</tr>';
 
-                // Linha final: valor total geral
+                // Linha final: valor total geral + desvio ao lado
                 let valorTotal = totaisPorTipo.reduce((acc, v) => acc + v, 0);
-                html += `<tr><td colspan='8' style='font-size:1.08em;color:#fff;background:#007bff;font-weight:700;text-align:right;'>Valor Total: R$ ${valorTotal.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}</td></tr>`;
+                                html += `<tr>
+                                    <td colspan='5' style='font-size:1.08em;color:#fff;background:#007bff;font-weight:700;text-align:right;'>Valor Total: R$ ${valorTotal.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                                    <td colspan='3' style='font-size:1.08em; background:#222; font-weight:700; text-align:right;'>
+                                        <span style='color:#ffe066; background:transparent; font-size:1.13em; font-weight:700; padding:8px 0 8px 0; border-radius:8px;'>Desvio: R$ ${valorDesvio.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                                    </td>
+                                </tr>`;
 
                 html += '</tbody></table>';
                 resumoSomas.innerHTML = html;

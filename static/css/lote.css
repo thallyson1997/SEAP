@@ -1,3 +1,16 @@
+#tabelaManualInput th, #tabelaManualInput td {
+    font-size: 0.88em !important;
+}
+/* Tabela do pop-up manualmente: largura maior */
+#tabelaManualInput {
+    width: 100% !important;
+    min-width: 700px !important;
+    max-width: 1100px !important;
+    border-collapse: collapse !important;
+}
+#tabelaManualInput td, #tabelaManualInput th {
+    padding: 0 !important;
+}
 /* ===== Célula anotada (amarela permanente) ===== */
 .celula-anotada {
     background: #fff7b2 !important; /* amarelo suave */
@@ -414,70 +427,128 @@
 }
 
 /* Popup - começa invisível */
+
+/* Pop-up dinâmico e moderno */
 .popup {
     display: none;
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.35);
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    transition: background 0.25s;
+    animation: popupFadeInBg 0.3s;
 }
-
 .popup.ativo {
     display: flex !important;
 }
 
-/* Conteúdo do popup */
 .popup-content {
-    background: #fff;
-    padding: 28px 24px;
-    border-radius: 12px;
-    min-width: 320px;
-    max-width: 95vw;
-    width: 400px;
+    background: linear-gradient(120deg, #f5faff 60%, #e3f0ff 100%);
+    padding: 38px 32px 28px 32px;
+    border-radius: 18px;
+    min-width: 340px;
+    max-width: 98vw;
+    width: 420px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    animation: popupFadeIn 0.3s ease;
+    gap: 18px;
+    box-shadow: 0 8px 32px rgba(0,123,255,0.18), 0 2px 12px rgba(0,0,0,0.10);
+    animation: popupFadeIn 0.35s cubic-bezier(.42,1.2,.58,1);
     word-break: break-word;
     overflow-wrap: break-word;
+    position: relative;
 }
 .popup-content label, .popup-content textarea, .popup-content select, .popup-content input {
     word-break: break-word;
     overflow-wrap: break-word;
     max-width: 100%;
+    font-size: 1.08em;
+}
+.popup-content textarea, .popup-content input {
+    border-radius: 8px;
+    border: 1px solid #e0e7ef;
+    padding: 7px 10px;
+    font-size: 1.07em;
+    background: #f8fbff;
+    transition: border 0.18s, box-shadow 0.18s;
+    box-shadow: 0 1px 4px rgba(0,123,255,0.07);
+}
+.popup-content textarea:focus, .popup-content input:focus {
+    border: 1.5px solid #007bff;
+    background: #e3f0ff;
+    outline: none;
+    box-shadow: 0 2px 8px rgba(0,123,255,0.13);
 }
 .popup-content textarea {
     resize: vertical;
     min-height: 60px;
     max-height: 200px;
 }
-
-/* Botões do popup */
+.popup-content h2 {
+    font-size: 1.35em;
+    color: #007bff;
+    margin-bottom: 8px;
+    text-align: center;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+.popup-content select {
+    background: #f8fbff;
+    border-radius: 8px;
+    border: 1px solid #e0e7ef;
+    padding: 7px 10px;
+    font-size: 1.07em;
+    margin-bottom: 6px;
+}
+.popup-content select:focus {
+    border: 1.5px solid #007bff;
+    background: #e3f0ff;
+    outline: none;
+}
 .popup-buttons {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
+    gap: 14px;
     margin-top: 10px;
 }
-
 .popup-buttons button {
-    background-color: #007bff;
+    background: linear-gradient(90deg, #007bff 60%, #00c6ff 100%);
     border: none;
     color: white;
-    padding: 8px 15px;
-    border-radius: 5px;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 1.09em;
+    font-weight: 600;
     cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,123,255,0.10);
+    transition: background 0.18s, transform 0.18s, box-shadow 0.18s;
+    outline: none;
 }
-
 .popup-buttons button:hover {
-    background-color: #0056b3;
+    background: linear-gradient(90deg, #00c6ff 60%, #007bff 100%);
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 4px 16px rgba(0,123,255,0.13);
 }
-
+.popup-buttons button#btnCloseManualAdd,
+.popup-buttons button#btnClose,
+.popup-buttons button#btnCloseDelete {
+    background: linear-gradient(90deg, #e0e0e0 60%, #f6f6f6 100%);
+    color: #333;
+}
+.popup-buttons button#btnCloseManualAdd:hover,
+.popup-buttons button#btnClose:hover,
+.popup-buttons button#btnCloseDelete:hover {
+    background: linear-gradient(90deg, #f6f6f6 60%, #e0e0e0 100%);
+}
 @keyframes popupFadeIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(-30px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes popupFadeInBg {
+    from { background: rgba(0,0,0,0.0); }
+    to { background: rgba(0,0,0,0.35); }
 }
