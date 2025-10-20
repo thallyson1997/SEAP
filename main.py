@@ -196,7 +196,7 @@ def lote1():
     except Exception:
         dias_no_mes = 31
     # Carrega lista de presídios do arquivo presidios.json
-    caminho_presidios = os.path.join(os.path.dirname(__file__), 'presidios.json')
+    caminho_presidios = os.path.join(os.path.dirname(__file__), 'dados','presidios.json')
     try:
         with open(caminho_presidios, encoding='utf-8') as f:
             presidios_json = json.load(f)
